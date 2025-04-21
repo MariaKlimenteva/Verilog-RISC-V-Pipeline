@@ -1,0 +1,5 @@
+*.out
+*.vcd
+.vscode/
+*.vvp
+output/
