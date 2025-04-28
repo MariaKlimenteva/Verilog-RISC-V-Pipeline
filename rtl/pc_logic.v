@@ -19,7 +19,7 @@ module pc_logic #(
   assign pc_plus_4 = current_pc + 4;
 
   // если pc_sel=1, берем адрес перехода, иначе берем pc+4
-//   assign next_pc = (pc_sel == 1'b1) ? next_pc_select_in : pc_plus_4;
+  // assign next_pc = (pc_sel == 1'b1) ? next_pc_select_in : pc_plus_4;
   assign next_pc = pc_plus_4;
 
   always @(posedge clk or posedge rst)

@@ -4,10 +4,10 @@ module alu #(
   )(
     input wire [XLEN-1:0] src1,
     input wire [XLEN-1:0] src2,
-    input wire [ALU_OP_WIDTH-1:0] alu_op, // Control signal selecting the operation
+    input wire [ALU_OP_WIDTH-1:0] alu_op,
 
     output reg [XLEN-1:0] result,
-    output wire zero    // Flag indicating if the result is zero
+    output wire zero 
   );
   localparam ALU_OP_ADD  = 4'b0000;
   localparam ALU_OP_SUB  = 4'b0001;
@@ -46,30 +46,28 @@ module alu #(
       ALU_OP_SRA:
         result = $signed(src1) >>> shamt;
 
-      ALU_OP_SLT:  // Signed comparison
+      ALU_OP_SLT:  
         if ($signed(src1) < $signed(src2))
-          result = {{XLEN-1{1'b0}}, 1'b1}; // Zero-extend 1
+          result = {{XLEN-1{1'b0}}, 1'b1}; 
         else
-          result = {XLEN{1'b0}}; // Result is 0
+          result = {XLEN{1'b0}}; 
 
-      ALU_OP_SLTU: // Unsigned comparison
+      ALU_OP_SLTU: 
         if (src1 < src2)
-          result = {{XLEN-1{1'b0}}, 1'b1}; // Zero-extend 1
+          result = {{XLEN-1{1'b0}}, 1'b1}; 
         else
-          result = {XLEN{1'b0}}; // Result is 0
+          result = {XLEN{1'b0}}; 
 
       ALU_OP_COPY_SRC1:
-        result = src1; // Pass src1
+        result = src1; 
       ALU_OP_COPY_SRC2:
-        result = src2; // Pass src2
+        result = src2; 
 
       default:
       begin
         result = {XLEN{1'bx}};
-        $display("Warning: Unknown ALU operation code %b at time %t", alu_op, $time);
       end
     endcase
   end
-
   assign zero = (result == {XLEN{1'b0}});
 endmodule

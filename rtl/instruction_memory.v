@@ -16,14 +16,7 @@ module instruction_memory #(
   begin
     if (INIT_FILE != "")
     begin
-    //   $display("Initializing Instruction Memory from %s", INIT_FILE);
-    //   try
-        $readmemh(INIT_FILE, mem);
-    //   catch (e)
-            // $display("ERROR: Failed to read instruction memory file '%s'. %s", INIT_FILE, e.message());
-    //   $finish;
-    //   endtry
-        // $display("Instruction Memory Initialization complete.");
+      $readmemh(INIT_FILE, mem);
     end
     else
     begin
