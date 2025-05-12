@@ -3,3 +3,4 @@
 .vscode/
 *.vvp
 output/
+obj_dir/
