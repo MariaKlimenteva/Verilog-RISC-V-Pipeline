@@ -1,0 +1,75 @@
+#pragma once
+#include <vector>
+#include <string>
+#include <iostream>
+#include "Vriscv_pipeline_top.h"
+#include "verilated.h"
+#include "verilated_vcd_c.h"
+
+#define COLOR_RED    "\033[31m"
+#define COLOR_GREEN  "\033[32m"
+#define COLOR_RESET  "\033[0m"
+
+#define MEM_DEPTH 1024
+
+struct RegCheck {
+    int         reg_num;
+    uint32_t    expected;
+    std::string reg_name;
+};
+
+struct TestResult {
+    const char* reg_name;
+    int expected;
+    int actual;
+    bool passed;
+};
+
+inline void check_registers(Vriscv_pipeline_top* top, const std::vector<RegCheck>& checks, const std::string& test_name = "")
+{
+    if (!test_name.empty()) {
+        std::cout << "\n=== Checking registers for test: " << test_name << " ===" << std::endl;
+    }
+    bool all_passed = true;
+    for (const auto& check : checks) {
+        uint32_t actual = top->riscv_pipeline_top__DOT__reg_file__DOT__registers[check.reg_num];
+        
+        if (actual != check.expected) {
+            std::cout << COLOR_RED << "[FAIL] "
+                      << check.reg_name << " (x" << check.reg_num << "): "
+                      << "expected " << check.expected
+                      << ", got " << actual 
+                      << COLOR_RESET << std::endl;
+            all_passed = false;
+        } else {
+            std::cout << COLOR_GREEN << "[PASS] "
+                      << check.reg_name << " (x" << check.reg_num << "): "
+                      << actual 
+                      << COLOR_RESET << std::endl;
+        }
+    }
+
+    if (all_passed) {
+        std::cout << COLOR_GREEN << "All register checks passed!" << COLOR_RESET << std::endl;
+    } else {
+        std::cout << COLOR_RED << "Some register checks failed!" << COLOR_RESET << std::endl;
+    }
+}
+
+inline void load_hex_dynamic(Vriscv_pipeline_top* top, const std::string& filename) {
+    std::ifstream file(filename);
+    uint32_t value;
+    size_t addr = 0;
+
+    if (!file.is_open()) {
+        std::cerr << "Error: Cannot open HEX file " << filename << std::endl;
+        exit(1);
+    }
+
+    while (file >> std::hex >> value) {
+        if (addr >= MEM_DEPTH) break;  
+        top->riscv_pipeline_top__DOT__i_mem__DOT__mem[addr] = value;
+        addr++;
+    }
+    std::cout << "Loaded " << addr << " instructions from " << filename << std::endl;
+}

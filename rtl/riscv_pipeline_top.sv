@@ -2,15 +2,12 @@
 
 module riscv_pipeline_top #(
     parameter MEM_DEPTH    = 1024,
-    parameter IMEM_INIT_FILE = "addi_program.hex", 
     parameter DMEM_INIT_FILE = "", 
     parameter RESET_VECTOR = 32'h00000000
 ) (
     input logic clk,
     input logic rst 
 );
-    /* verilator lint_off UNUSED */
-    /* verilator lint_off UNDRIVEN */
     if_id_data  if_id_current, if_id_next;
     id_ex_data  id_ex_current, id_ex_next;
     ex_mem_data ex_mem_current, ex_mem_next;
@@ -21,8 +18,6 @@ module riscv_pipeline_top #(
     logic [XLEN-1:0] pc_next_target = {(XLEN){1'b0}};
 
     logic [XLEN-1:0] if_instruction;
-    // logic [XLEN-1:0] id_instruction;
-
     logic [XLEN-1:0] mem_read_data;
 
     logic wb_regwrite;
@@ -30,8 +25,6 @@ module riscv_pipeline_top #(
     logic [XLEN-1:0] wb_write_data;
 
     logic take_branch;
-    /* verilator lint_off UNDRIVEN */
-    /* verilator lint_off UNUSED */
 
     pc_logic #(
         .RESET_VECTOR(RESET_VECTOR)
@@ -46,8 +39,7 @@ module riscv_pipeline_top #(
     
     instruction_memory #(
         .ADDR_WIDTH(XLEN), 
-        .MEM_DEPTH(MEM_DEPTH),
-        .INIT_FILE(IMEM_INIT_FILE)
+        .MEM_DEPTH(MEM_DEPTH)
     ) i_mem (
         .addr(pc_out), 
         .instr(if_instruction)

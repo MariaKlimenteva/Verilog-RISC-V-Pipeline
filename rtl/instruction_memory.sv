@@ -15,16 +15,9 @@ module instruction_memory #(
   logic [XLEN-1:0] mem [0:MEM_DEPTH-1];
 
   initial begin
-    /* verilator lint_off WIDTH */
     if (INIT_FILE != "") begin
-    /* verilator lint_on WIDTH */
       $display("IMEM: Initializing from %s", INIT_FILE);
       $readmemh(INIT_FILE, mem);
-    end else begin
-      for (int i = 0; i < MEM_DEPTH; i++) begin
-        mem[i] = '0;
-      end
-      $display("Instruction Memory initialized with default values (no INIT_FILE specified).");
     end
   end
 
