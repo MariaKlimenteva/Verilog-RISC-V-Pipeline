@@ -26,6 +26,12 @@ module riscv_pipeline_top #(
 
     logic take_branch;
 
+    logic stall;
+    logic hu_ex_rs1;
+    logic hu_mem_rs1;
+    logic hu_ex_rs2;
+    logic hu_mem_rs2;
+
     pc_logic #(
         .RESET_VECTOR(RESET_VECTOR)
     ) pc_reg (
@@ -50,14 +56,6 @@ module riscv_pipeline_top #(
         if_id_next.instruction = if_instruction;
         if_id_next.pc_plus_4   = pc_plus_4;
         if_id_next.valid       = !rst; 
-    end
-    
-    // IF/ID Register
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst)
-            if_id_current <= '{default: '0, instruction: NOP_INSTRUCTION}; 
-        else
-            if_id_current <= if_id_next;
     end
 
     logic [4:0] id_rs1_addr;
@@ -110,24 +108,26 @@ module riscv_pipeline_top #(
             id_ex_next.rd_addr    = id_rd_addr;
         end
     end
-       
-    // ID/EX Register
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst)
-            id_ex_current <= '{default: '0}; 
-        else
-            id_ex_current <= id_ex_next;
-    end
+
+    hazard_unit hu (
+        .id_rs1_addr(if_id_current.instruction[19:15]),
+        .id_rs2_addr(if_id_current.instruction[24:20]),
+        .ex_rd_addr(id_ex_current.rd_addr),
+        .ex_regwrite(id_ex_current.control.RegWrite),
+        .mem_rd_addr(ex_mem_current.rd_addr),
+        .mem_regwrite(ex_mem_current.RegWrite),
+        
+        .hu_ex_rs1(hu_ex_rs1),
+        .hu_mem_rs1(hu_mem_rs1),
+        .hu_ex_rs2(hu_ex_rs2),
+        .hu_mem_rs2(hu_mem_rs2)
+    );
 
     logic [XLEN-1:0] src1_alu;
     logic [XLEN-1:0] src2_alu;
     logic [XLEN-1:0] ex_alu_result;
     logic ex_alu_zero;
     
-    // EX logic
-    assign src1_alu = id_ex_current.rs1_data;
-    assign src2_alu = (id_ex_current.control.ALUSrc) ? id_ex_current.immediate : id_ex_current.rs2_data;
-
     alu #() alu_unit (
         .src1(src1_alu),      
         .src2(src2_alu), 
@@ -135,6 +135,17 @@ module riscv_pipeline_top #(
         .result(ex_alu_result),
         .zero(ex_alu_zero)
     );
+    
+    // EX logic
+    assign src1_alu = (hu_ex_rs1) ? ex_alu_result :        
+                      (hu_mem_rs1) ? ex_mem_current.alu_result : 
+                      id_ex_current.rs1_data;
+
+    assign src2_alu = (hu_ex_rs2)  ? ex_alu_result :        
+                      (hu_mem_rs2) ? ex_mem_current.alu_result :
+                      (id_ex_current.control.ALUSrc) ? id_ex_current.immediate : 
+                      id_ex_current.rs2_data;
+
 
     always_comb begin
         ex_mem_next = '{default:'0};
@@ -152,13 +163,6 @@ module riscv_pipeline_top #(
         end
     end
 
-    // EX/MEM Register
-    always_ff @(posedge clk or posedge rst) begin
-        if (rst)
-            ex_mem_current <= '{default: '0};
-        else
-            ex_mem_current <= ex_mem_next;
-    end
     assign mem_read_data = {XLEN{1'bx}};
 
     always_comb begin
@@ -176,11 +180,22 @@ module riscv_pipeline_top #(
 
     assign wb_write_data = (mem_wb_current.MemToReg) ? mem_wb_current.read_data : mem_wb_current.alu_result;
 
-    // MEM/WB Register
     always_ff @(posedge clk or posedge rst) begin
-        if (rst)
-            mem_wb_current <= '{default: '0};
-        else
-            mem_wb_current <= mem_wb_next;
+    if (rst) begin
+        if_id_current <= '{default: '0, instruction: NOP_INSTRUCTION};
+        id_ex_current <= '{default: '0};
+        ex_mem_current <= '{default: '0};
+        mem_wb_current <= '{default: '0};
+    end else if (stall) begin
+        if_id_current <= if_id_current;
+        id_ex_current <= id_ex_current;
+        ex_mem_current <= ex_mem_current;
+        mem_wb_current <= mem_wb_current;
+    end else begin
+        if_id_current <= if_id_next;
+        id_ex_current <= id_ex_next;
+        ex_mem_current <= ex_mem_next;
+        mem_wb_current <= mem_wb_next;
     end
+end
 endmodule

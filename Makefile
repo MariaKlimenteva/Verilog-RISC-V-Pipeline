@@ -1,19 +1,16 @@
-SRC_DIR = ./src
-INCLUDE_DIR = ./include
-VERILATOR_FLAGS = -Wall -I$(SRC_DIR) -I$(INCLUDE_DIR) -Wno-UNUSED -Wno-UNDRIVEN
+SRC_DIR := ./src
+INCLUDE_DIR := ./include
+TOP_MODULE := $(SRC_DIR)/riscv_pipeline_top.sv
+
+VERILATOR_FLAGS = -Wall -I$(SRC_DIR) -I$(INCLUDE_DIR) -Wno-UNUSED -Wno-UNDRIVEN --Wno-fatal \
+		--Wno-width -cc --trace -CFLAGS "-std=c++11" --public-flat-rw
 TB_SRC = tb/addi_verilator.cpp
-VERILOG_SRC =  src/*.sv
 
-lint:
-		verilator --lint-only $(VERILATOR_FLAGS) riscv_pipeline_top.sv
+VERILOG_SRCS := $(wildcard $(SRC_DIR)/*.sv $(SRC_DIR)/*.v \
+                          $(INCLUDE_DIR)/*.vh $(INCLUDE_DIR)/*.svh)
 
-
-sim:
-		verilator --Wno-fatal $(VERILATOR_FLAGS) --Wno-width -cc --trace --exe tb/addi_verilator.cpp \
-		src/riscv_pipeline_top.sv src/register_file.sv \
-    	include/defs.vh include/alu_opcodes.vh include/rv_opcodes.vh \
-		-CFLAGS "-std=c++11" \
-		--public-flat-rw
+sim: 
+		verilator  $(VERILATOR_FLAGS)  --exe $(TB_SRC) $(TOP_MODULE)  
 
 test_addi: 
 		make sim

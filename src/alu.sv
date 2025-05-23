@@ -2,15 +2,15 @@
 `include "defs.vh"
 `timescale 1ns / 1ps
 module alu #()(
-    input wire [XLEN-1:0] src1,
-    input wire [XLEN-1:0] src2,
-    input wire [ALU_OP_WIDTH-1:0] alu_op,
+    input logic [XLEN-1:0] src1,
+    input logic [XLEN-1:0] src2,
+    input logic [ALU_OP_WIDTH-1:0] alu_op,
 
-    output reg [XLEN-1:0] result,
-    output wire zero 
+    output logic [XLEN-1:0] result,
+    output logic zero 
   );
   localparam SHAMT_WIDTH = $clog2(XLEN);
-  wire [SHAMT_WIDTH-1:0] shamt = src2[SHAMT_WIDTH-1:0];
+  logic [SHAMT_WIDTH-1:0] shamt = src2[SHAMT_WIDTH-1:0];
 
   always @(*)
   begin
