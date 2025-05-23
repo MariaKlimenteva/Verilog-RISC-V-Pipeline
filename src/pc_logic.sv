@@ -24,6 +24,6 @@ module pc_logic #(
     end
   end
 
-  assign pc_out = next_pc;
+  assign pc_out = current_pc;
   assign pc_plus_4 = current_pc + 4;
 endmodule

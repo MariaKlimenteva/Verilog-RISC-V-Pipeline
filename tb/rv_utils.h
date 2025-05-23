@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include "Vriscv_pipeline_top.h"
 #include "verilated.h"
 #include "verilated_vcd_c.h"
@@ -58,6 +59,7 @@ inline void check_registers(Vriscv_pipeline_top* top, const std::vector<RegCheck
 
 inline void load_hex_dynamic(Vriscv_pipeline_top* top, const std::string& filename) {
     std::ifstream file(filename);
+    std::string line;
     uint32_t value;
     size_t addr = 0;
 
@@ -66,10 +68,24 @@ inline void load_hex_dynamic(Vriscv_pipeline_top* top, const std::string& filena
         exit(1);
     }
 
-    while (file >> std::hex >> value) {
-        if (addr >= MEM_DEPTH) break;  
-        top->riscv_pipeline_top__DOT__i_mem__DOT__mem[addr] = value;
-        addr++;
+    while (std::getline(file, line)) {
+        std::string trimmed = line;
+        trimmed.erase(0, trimmed.find_first_not_of(" \t\r\n")); 
+        trimmed.erase(trimmed.find_last_not_of(" \t\r\n") + 1); 
+
+        if (trimmed.empty() || trimmed[0] == '#' || trimmed[0] == '/' || trimmed[0] == ';') {
+            continue; 
+        }
+
+        std::istringstream iss(trimmed);
+        if (iss >> std::hex >> value) {
+            if (addr >= MEM_DEPTH) break;
+            top->riscv_pipeline_top__DOT__i_mem__DOT__mem[addr] = value;
+            addr++;
+        } else {
+            std::cerr << "Warning: Invalid line in HEX file: " << line << std::endl;
+        }
     }
+
     std::cout << "Loaded " << addr << " instructions from " << filename << std::endl;
 }

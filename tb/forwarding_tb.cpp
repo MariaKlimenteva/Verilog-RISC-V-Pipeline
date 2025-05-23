@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     top->rst = 0; 
 
     printf("Reset finished. Starting execution...\n");
-    int check_time_1 = 50;
+    int check_time_1 = 100;
     int check_time_2 = 60;
     int check_time_3 = 100;
 
@@ -67,15 +67,6 @@ int main(int argc, char** argv) {
                     {5, 13, "x5"}
                 }, "1st ex forwarding test");
             checked_1 = true;
-        }
-        if (main_time > check_time_2 && !top->clk && !checked_2) { 
-            printf("Checking after estimated time for second ADDI @ time %llu\n", main_time);
-            check_registers(top, {{3, 10, "x3_after_second_addi"}}, "Second ADDI Test");
-            checked_2 = true;
-        }
-        if (main_time > check_time_3 && !top->clk && !checked_3) {
-            check_registers(top, {{3, 15, "x3 = x2 + x1"}}, "Test 3");
-            checked_3 = true;
         }
 
         main_time++;

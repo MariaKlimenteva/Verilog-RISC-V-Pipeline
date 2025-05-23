@@ -1,4 +1,19 @@
 #!/bin/bash
 
-make test_addi
-obj_dir/Vriscv_pipeline_top hex/addi.hex
+TEST_NAME=$1
+
+ALL_TESTS=("addi" "forwarding")
+
+if [ -z "$1" ]; then
+  echo "Run all tests..."
+  for TEST in "${ALL_TESTS[@]}"; do
+    echo "Run test: $TEST"
+    make $TEST
+    obj_dir/Vriscv_pipeline_top hex/$TEST.hex
+  done
+else
+  TEST_NAME=$1
+  echo "Run test: $TEST_NAME"
+  make $TEST_NAME
+  obj_dir/Vriscv_pipeline_top hex/$TEST_NAME.hex
+fi
