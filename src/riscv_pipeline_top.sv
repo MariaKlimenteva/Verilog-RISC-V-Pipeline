@@ -21,7 +21,7 @@ module riscv_pipeline_top #(
     logic [XLEN-1:0] mem_read_data;
 
     logic wb_regwrite;
-    logic [4:0] wb_rd_addr;
+    // logic [4:0] wb_rd_addr;
     logic [XLEN-1:0] wb_write_data;
 
     logic take_branch;
@@ -60,22 +60,36 @@ module riscv_pipeline_top #(
 
     logic [4:0] id_rs1_addr;
     logic [4:0] id_rs2_addr;
-    logic [4:0] id_rd_addr;
+    // logic [4:0] id_rd_addr;
 
     logic [XLEN-1:0] regfile_rs1_data;
     logic [XLEN-1:0] regfile_rs2_data;
 
     // ID logic 
-    assign id_rs1_addr = if_id_current.instruction[19:15];
-    assign id_rs2_addr = if_id_current.instruction[24:20];
-    assign id_rd_addr  = if_id_current.instruction[11:7];
 
     /* public */ register_file #() reg_file (
-        .clk(clk), .rst(rst),
-        .rs1_addr(id_rs1_addr), .rs2_addr(id_rs2_addr),
-        .we(mem_wb_current.RegWrite), .rd_addr(mem_wb_current.rd_addr),   
+        .clk(clk), 
+        .rst(rst),
+        .rs1_addr(if_id_current.instruction[19:15]), 
+        .rs2_addr(if_id_current.instruction[24:20]),
+        .we(mem_wb_current.RegWrite), 
+        .rd_addr(mem_wb_current.rd_addr),   
         .rd_wdata(wb_write_data),
-        .rs1_rdata(regfile_rs1_data), .rs2_rdata(regfile_rs2_data)
+        .rs1_rdata(regfile_rs1_data), 
+        .rs2_rdata(regfile_rs2_data)
+    );
+    logic forward_src1_alu;
+    logic forward_src2_alu;
+    hazard_unit hu (
+        .id_ex_rs1_addr(id_ex_current.rs1_addr),
+        .id_ex_rs2_addr(id_ex_current.rs2_addr),     
+        .ex_mem_rd_addr(ex_mem_current.rd_addr),      
+        .ex_mem_regwrite(ex_mem_current.RegWrite),     
+        .mem_wb_rd_addr(mem_wb_current.rd_addr),     
+        .mem_wb_regwrite(mem_wb_current.RegWrite),    
+        
+        .forward_a(forward_src1_alu),
+        .forward_b(forward_src2_alu)
     );
 
     logic [XLEN-1:0] immgen_immediate;
@@ -105,48 +119,51 @@ module riscv_pipeline_top #(
             id_ex_next.immediate  = immgen_immediate;
             id_ex_next.rs1_addr   = id_rs1_addr;
             id_ex_next.rs2_addr   = id_rs2_addr;
-            id_ex_next.rd_addr    = id_rd_addr;
+            id_ex_next.rd_addr    = if_id_current.instruction[11:7];
         end
     end
 
-    hazard_unit hu (
-        .id_rs1_addr(if_id_current.instruction[19:15]),
-        .id_rs2_addr(if_id_current.instruction[24:20]),
-        .ex_rd_addr(id_ex_current.rd_addr),
-        .ex_regwrite(id_ex_current.control.RegWrite),
-        .mem_rd_addr(ex_mem_current.rd_addr),
-        .mem_regwrite(ex_mem_current.RegWrite),
-        
-        .hu_ex_rs1(hu_ex_rs1),
-        .hu_mem_rs1(hu_mem_rs1),
-        .hu_ex_rs2(hu_ex_rs2),
-        .hu_mem_rs2(hu_mem_rs2)
-    );
-
-    logic [XLEN-1:0] src1_alu;
-    logic [XLEN-1:0] src2_alu;
+    // logic [XLEN-1:0] src1_alu;
+    // logic [XLEN-1:0] src2_alu;
     logic [XLEN-1:0] ex_alu_result;
     logic ex_alu_zero;
-    
+
+    // EX logic
+    logic [XLEN-1:0] forwarded_rs1_data;
+    logic [XLEN-1:0] forwarded_rs2_data_or_imm;
+    // multiplexer for rs1
+    always_comb begin
+        case (forward_src1_alu)
+            2'b00: forwarded_rs1_data = id_ex_current.rs1_data;
+            2'b01: forwarded_rs1_data = wb_write_data;
+            2'b10: forwarded_rs1_data = id_ex_current.rs1_data;
+        endcase
+    end
+
+    logic [XLEN-1:0] alu_operand_b_before_fwd;
+    assign alu_operand_b_before_fwd = (id_ex_current.control.ALUSrc) ? 
+                                        id_ex_current.immediate : id_ex_current.rs2_data;
+    // multiplexer for rs2
+    always_comb begin
+        if (id_ex_current.control.ALUSrc) begin
+            forwarded_rs2_data_or_imm = alu_operand_b_before_fwd;
+        end else begin
+            case (forward_src2_alu)
+                2'b00: forwarded_rs2_data_or_imm = id_ex_current.rs2_data;
+                2'b01: forwarded_rs2_data_or_imm = wb_write_data;
+                2'b10: forwarded_rs2_data_or_imm = ex_mem_current.alu_result;
+            endcase
+        end
+    end
+
     alu #() alu_unit (
-        .src1(src1_alu),      
-        .src2(src2_alu), 
+        .src1(forwarded_rs1_data),      
+        .src2(forwarded_rs2_data_or_imm), 
         .alu_op(id_ex_current.control.ALUOp),
         .result(ex_alu_result),
         .zero(ex_alu_zero)
     );
-    
-    // EX logic
-    assign src1_alu = (hu_ex_rs1) ? ex_alu_result :        
-                      (hu_mem_rs1) ? ex_mem_current.alu_result : 
-                      id_ex_current.rs1_data;
-
-    assign src2_alu = (hu_ex_rs2)  ? ex_alu_result :        
-                      (hu_mem_rs2) ? ex_mem_current.alu_result :
-                      (id_ex_current.control.ALUSrc) ? id_ex_current.immediate : 
-                      id_ex_current.rs2_data;
-
-
+                      
     always_comb begin
         ex_mem_next = '{default:'0};
         ex_mem_next.valid = id_ex_current.valid;

@@ -19,9 +19,3 @@ uses for instructions that work with memory - load & store
 ## Third stage: hazard unit
 1. Data hazards : forwarding
 2. Control hazards : branches, jumps
-
----
-0. сделать run_verilator.sh более удобным
-1. разобраться почему мне нужен первый ноп иначе не работает даже одна инструкция
-понять про такты - почему такое большое число используется в тестбенче
-2. починить тест с конфликтами

@@ -44,6 +44,7 @@ typedef struct packed {
     logic Branch;
 
     logic [31:0] alu_result;
+    logic [31:0] rs1_data;
     logic [31:0] rs2_data;
     logic [4:0]  rd_addr;
     logic valid;

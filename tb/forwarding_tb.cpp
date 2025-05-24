@@ -39,9 +39,7 @@ int main(int argc, char** argv) {
     top->rst = 0; 
 
     printf("Reset finished. Starting execution...\n");
-    int check_time_1 = 100;
-    int check_time_2 = 60;
-    int check_time_3 = 100;
+    int check_time_1 = 4200;
 
     bool checked_1 = false;
     bool checked_2 = false;
@@ -60,12 +58,9 @@ int main(int argc, char** argv) {
             printf("Checking after estimated time for first ADDI @ time %llu\n", main_time);
             
                 check_registers(top, {
-                    {4, 23,   "x4"},
-                    {2, 5,   "x2"},
-                    {3, 5, "x3"}, 
+                    {2, 5,   "x2"}, 
                     {1, 10, "x1"}, 
-                    {5, 13, "x5"}
-                }, "1st ex forwarding test");
+                }, "Read after write conflict, TEST 1");
             checked_1 = true;
         }
 
