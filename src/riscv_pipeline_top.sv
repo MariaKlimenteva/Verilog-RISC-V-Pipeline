@@ -20,17 +20,11 @@ module riscv_pipeline_top #(
     logic [XLEN-1:0] if_instruction;
     logic [XLEN-1:0] mem_read_data;
 
-    logic wb_regwrite;
-    // logic [4:0] wb_rd_addr;
     logic [XLEN-1:0] wb_write_data;
 
     logic take_branch;
 
     logic stall;
-    logic hu_ex_rs1;
-    logic hu_mem_rs1;
-    logic hu_ex_rs2;
-    logic hu_mem_rs2;
 
     pc_logic #(
         .RESET_VECTOR(RESET_VECTOR)
@@ -78,8 +72,9 @@ module riscv_pipeline_top #(
         .rs1_rdata(regfile_rs1_data), 
         .rs2_rdata(regfile_rs2_data)
     );
-    logic forward_src1_alu;
-    logic forward_src2_alu;
+    logic [1:0] forward_src1_alu;
+    logic [1:0] forward_src2_alu;
+
     hazard_unit hu (
         .id_ex_rs1_addr(id_ex_current.rs1_addr),
         .id_ex_rs2_addr(id_ex_current.rs2_addr),     
@@ -108,6 +103,9 @@ module riscv_pipeline_top #(
     );
 
     always_comb begin
+        id_rs1_addr = if_id_current.instruction[19:15];
+        id_rs2_addr = if_id_current.instruction[24:20];
+
         id_ex_next = '{default: '0}; 
         id_ex_next.valid = if_id_current.valid; 
 
@@ -123,8 +121,6 @@ module riscv_pipeline_top #(
         end
     end
 
-    // logic [XLEN-1:0] src1_alu;
-    // logic [XLEN-1:0] src2_alu;
     logic [XLEN-1:0] ex_alu_result;
     logic ex_alu_zero;
 
@@ -136,7 +132,8 @@ module riscv_pipeline_top #(
         case (forward_src1_alu)
             2'b00: forwarded_rs1_data = id_ex_current.rs1_data;
             2'b01: forwarded_rs1_data = wb_write_data;
-            2'b10: forwarded_rs1_data = id_ex_current.rs1_data;
+            2'b10: forwarded_rs1_data = ex_mem_current.alu_result;
+            default: forwarded_rs1_data = 'x;
         endcase
     end
 
@@ -152,6 +149,7 @@ module riscv_pipeline_top #(
                 2'b00: forwarded_rs2_data_or_imm = id_ex_current.rs2_data;
                 2'b01: forwarded_rs2_data_or_imm = wb_write_data;
                 2'b10: forwarded_rs2_data_or_imm = ex_mem_current.alu_result;
+                default: forwarded_rs2_data_or_imm = 'x;
             endcase
         end
     end
@@ -175,6 +173,7 @@ module riscv_pipeline_top #(
             ex_mem_next.MemWrite = id_ex_current.control.MemWrite;
             ex_mem_next.Branch   = id_ex_current.control.Branch; 
             ex_mem_next.alu_result = ex_alu_result; 
+            ex_mem_next.rs1_data = id_ex_current.rs1_data;
             ex_mem_next.rs2_data   = id_ex_current.rs2_data; 
             ex_mem_next.rd_addr    = id_ex_current.rd_addr; 
         end

@@ -11,22 +11,22 @@ module hazard_unit (
     output logic [1:0] forward_b
 );
     always_comb begin
-        forward_a = 2'b00;
+        assign forward_a = 2'b00;
         if (ex_mem_regwrite && (ex_mem_rd_addr != 5'b00000) && (ex_mem_rd_addr == id_ex_rs1_addr)) begin
-            forward_a = 2'b10;
+            assign forward_a = 2'b10;
         end
         else if (mem_wb_regwrite && (mem_wb_rd_addr != 5'b00000) && (mem_wb_rd_addr == id_ex_rs1_addr)) begin
-            forward_a = 2'b01;
+            assign forward_a = 2'b01;
         end
     end
 
     always_comb begin
-        forward_b = 2'b00;
+        assign forward_b = 2'b00;
         if (ex_mem_regwrite && (ex_mem_rd_addr != 5'b00000) && (ex_mem_rd_addr == id_ex_rs2_addr)) begin
-            forward_b = 2'b10;
+            assign forward_b = 2'b10;
         end
         else if (mem_wb_regwrite && (mem_wb_rd_addr != 5'b00000) && (mem_wb_rd_addr == id_ex_rs2_addr)) begin
-            forward_b = 2'b01;
+            assign forward_b = 2'b01;
         end
     end
 

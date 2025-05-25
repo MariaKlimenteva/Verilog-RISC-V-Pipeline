@@ -19,3 +19,5 @@ uses for instructions that work with memory - load & store
 ## Third stage: hazard unit
 1. Data hazards : forwarding
 2. Control hazards : branches, jumps
+
+Check slli, sll etc (shamt ?) (alu)
