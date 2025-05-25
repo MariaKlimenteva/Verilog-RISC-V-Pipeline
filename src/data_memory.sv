@@ -10,6 +10,7 @@ module data_memory #(
     input logic clk,
     input logic rst,
     input logic we,
+    input logic valid,
     input logic [ADDR_WIDTH-1:0] addr,
     input logic [DATA_WIDTH-1:0] wdata,
 
@@ -29,7 +30,7 @@ module data_memory #(
     end
 
     always_ff @(posedge clk) begin
-        if (we) begin
+        if (we && valid) begin
             mem[addr[ADDR_WIDTH-1:2]] <= wdata;
         end
     end

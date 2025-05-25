@@ -23,3 +23,7 @@ forwarding:
 lw_sw:
 		verilator  $(VERILATOR_FLAGS)  --exe $(TB_DIR)/lw_sw_tb.cpp $(SRC_DIR)/riscv_pipeline_top.sv
 		make -C $(OBJ_DIR_BASE) -f Vriscv_pipeline_top.mk
+
+stall_bubble_lw:
+		verilator  $(VERILATOR_FLAGS)  --exe $(TB_DIR)/stall_bubble_lw_tb.cpp $(SRC_DIR)/riscv_pipeline_top.sv
+		make -C $(OBJ_DIR_BASE) -f Vriscv_pipeline_top.mk

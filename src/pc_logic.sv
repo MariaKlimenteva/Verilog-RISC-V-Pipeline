@@ -6,6 +6,7 @@ module pc_logic #(
     input logic rst,
     input logic [XLEN-1:0] branch_target_in,
     input logic take_branch,
+    input logic stallF,
 
     output logic [XLEN-1:0] pc_out,
     output logic [XLEN-1:0] pc_plus_4
@@ -19,7 +20,7 @@ module pc_logic #(
   always_ff @( posedge clk or posedge rst ) begin
     if (rst) begin
       current_pc <= RESET_VECTOR;
-    end else begin
+    end else if (!stallF) begin
       current_pc <= next_pc;
     end
   end

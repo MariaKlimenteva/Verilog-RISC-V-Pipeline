@@ -23,7 +23,8 @@ module riscv_pipeline_top #(
 
     logic take_branch;
 
-    logic stall;
+    logic stallD;
+    logic flushE;
 
     pc_logic #(
         .RESET_VECTOR(RESET_VECTOR)
@@ -32,6 +33,7 @@ module riscv_pipeline_top #(
         .rst(rst),
         .branch_target_in(pc_next_target), 
         .take_branch(take_branch),
+        .stallF(stallD),
         .pc_out(pc_out),
         .pc_plus_4(pc_plus_4)
     );
@@ -53,7 +55,6 @@ module riscv_pipeline_top #(
 
     logic [4:0] id_rs1_addr;
     logic [4:0] id_rs2_addr;
-    // logic [4:0] id_rd_addr;
 
     logic [XLEN-1:0] regfile_rs1_data;
     logic [XLEN-1:0] regfile_rs2_data;
@@ -76,14 +77,20 @@ module riscv_pipeline_top #(
 
     hazard_unit hu (
         .id_ex_rs1_addr(id_ex_current.rs1_addr),
-        .id_ex_rs2_addr(id_ex_current.rs2_addr),     
+        .id_ex_rs2_addr(id_ex_current.rs2_addr),
+        .ex_rd_addr(id_ex_current.rd_addr),
+        .id_rs1_addr(if_id_current.instruction[19:15]),
+        .id_rs2_addr(if_id_current.instruction[24:20]),
         .ex_mem_rd_addr(ex_mem_current.rd_addr),      
         .ex_mem_regwrite(ex_mem_current.RegWrite),     
         .mem_wb_rd_addr(mem_wb_current.rd_addr),     
-        .mem_wb_regwrite(mem_wb_current.RegWrite),    
+        .mem_wb_regwrite(mem_wb_current.RegWrite), 
+        .mem_read(id_ex_current.control.MemRead),   
         
         .forward_a(forward_src1_alu),
-        .forward_b(forward_src2_alu)
+        .forward_b(forward_src2_alu),
+        .stallD(stallD),
+        .flushE(flushE)
     );
 
     logic [XLEN-1:0] immgen_immediate;
@@ -188,6 +195,7 @@ module riscv_pipeline_top #(
         .clk(clk),
         .rst(rst),
         .we(ex_mem_current.MemWrite),
+        .valid(ex_mem_current.valid),
         .addr(ex_mem_current.alu_result),
         .wdata(ex_mem_current.rs2_data),
         .rdata(mem_read_data)
@@ -209,21 +217,36 @@ module riscv_pipeline_top #(
     assign wb_write_data = (mem_wb_current.MemToReg) ? mem_wb_current.read_data : mem_wb_current.alu_result;
 
     always_ff @(posedge clk or posedge rst) begin
-    if (rst) begin
-        if_id_current <= '{default: '0, instruction: NOP_INSTRUCTION};
-        id_ex_current <= '{default: '0};
-        ex_mem_current <= '{default: '0};
-        mem_wb_current <= '{default: '0};
-    end else if (stall) begin
-        if_id_current <= if_id_current;
-        id_ex_current <= id_ex_current;
-        ex_mem_current <= ex_mem_current;
-        mem_wb_current <= mem_wb_current;
-    end else begin
-        if_id_current <= if_id_next;
-        id_ex_current <= id_ex_next;
-        ex_mem_current <= ex_mem_next;
-        mem_wb_current <= mem_wb_next;
+        if (rst) begin
+            if_id_current <= '{default: '0, instruction: NOP_INSTRUCTION};
+            id_ex_current <= '0;
+            ex_mem_current <= '0;
+            mem_wb_current <= '0;
+        end else begin 
+            if (stallD) begin
+                // stall
+                if_id_current <= if_id_current;
+            end else begin
+                if_id_current <= if_id_next;
+            end
+            if (flushE) begin
+                // bubble for EX/MEM
+                id_ex_current <= '{
+                    control: '0, 
+                    pc_plus_4: id_ex_next.pc_plus_4, 
+                    rs1_data: id_ex_next.rs1_data,
+                    rs2_data: id_ex_next.rs2_data,
+                    immediate: id_ex_next.immediate,
+                    rs1_addr: id_ex_next.rs1_addr,
+                    rs2_addr: id_ex_next.rs2_addr,
+                    rd_addr: id_ex_next.rd_addr,
+                    valid: 0
+                };
+            end else if (!stallD) begin
+                id_ex_current <= id_ex_next;
+            end
+            ex_mem_current <= ex_mem_next;
+            mem_wb_current <= mem_wb_next;
+        end
     end
-end
 endmodule
