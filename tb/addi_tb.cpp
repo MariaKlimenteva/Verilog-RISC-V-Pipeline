@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
         tfp->dump(main_time);
 
         if (main_time > check_time_1 && !top->clk && !checked_1) { 
-            printf("Checking after estimated time for first ADDI @ time %llu\n", main_time);
+            printf("Checking after estimated time for first ADDI @ time %lu\n", main_time);
             
                 check_registers(top, {
                     {1, 5,   "x1"},
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
             checked_1 = true;
         }
         if (main_time > check_time_2 && !top->clk && !checked_2) { 
-            printf("Checking after estimated time for second ADDI @ time %llu\n", main_time);
+            printf("Checking after estimated time for second ADDI @ time %lu\n", main_time);
             check_registers(top, {{3, 10, "x3_after_second_addi"}}, "Second ADDI Test");
             checked_2 = true;
         }

@@ -19,3 +19,7 @@ addi:
 forwarding:
 		verilator  $(VERILATOR_FLAGS)  --exe $(TB_DIR)/forwarding_tb.cpp $(SRC_DIR)/riscv_pipeline_top.sv
 		make -C $(OBJ_DIR_BASE) -f Vriscv_pipeline_top.mk
+
+lw_sw:
+		verilator  $(VERILATOR_FLAGS)  --exe $(TB_DIR)/lw_sw_tb.cpp $(SRC_DIR)/riscv_pipeline_top.sv
+		make -C $(OBJ_DIR_BASE) -f Vriscv_pipeline_top.mk

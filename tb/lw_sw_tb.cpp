@@ -39,8 +39,8 @@ int main(int argc, char** argv) {
     top->rst = 0; 
 
     printf("Reset finished. Starting execution...\n");
-    int check_time_1 = 4200;
-    int check_time_2 = 4200;
+    int check_time_1 = 4150;
+    int check_time_2 = 4500;
 
     bool checked_1 = false;
     bool checked_2 = false;
@@ -59,21 +59,16 @@ int main(int argc, char** argv) {
             printf("Checking after estimated time for first ADDI @ time %lu\n", main_time);
             
             check_registers(top, {
-                {2, 5,   "x2"}, 
-                {1, 10, "x1"}, 
-            }, "Read after write conflict, TEST 1");
+                {6, 1656},  
+            }, "Check load word and store, TEST 1");
             checked_1 = true;
         }
 
-        if (main_time > check_time_2 && !top->clk && ! checked_2) {
-            printf("Checking after estimated time for first ADDI @ time %lu\n", main_time);
-            check_registers(top, {
-                {3, 23, "x1 + 13"}, 
-                {4, 13, "x3 - x1"},
-                {5, 5}, 
-                {6, 15},
-                {7, 10},
-            }, "TEST 2: check RAW conflicts + alu ops");
+        if (main_time > check_time_2 && !top->clk && !checked_2) {
+            check_registers (top, {
+                {6, 999},
+                {2, 0}
+            }, "Check for rewrite, TEST 2");
             checked_2 = true;
         }
 

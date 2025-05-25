@@ -18,7 +18,6 @@ module riscv_pipeline_top #(
     logic [XLEN-1:0] pc_next_target = {(XLEN){1'b0}};
 
     logic [XLEN-1:0] if_instruction;
-    logic [XLEN-1:0] mem_read_data;
 
     logic [XLEN-1:0] wb_write_data;
 
@@ -161,7 +160,7 @@ module riscv_pipeline_top #(
         .result(ex_alu_result),
         .zero(ex_alu_zero)
     );
-                      
+
     always_comb begin
         ex_mem_next = '{default:'0};
         ex_mem_next.valid = id_ex_current.valid;
@@ -179,7 +178,20 @@ module riscv_pipeline_top #(
         end
     end
 
-    assign mem_read_data = {XLEN{1'bx}};
+    logic [XLEN-1:0] mem_read_data;
+
+    data_memory #(
+        .ADDR_WIDTH(XLEN),
+        .DATA_WIDTH(XLEN),
+        .MEM_DEPTH(MEM_DEPTH)
+    ) data_mem (
+        .clk(clk),
+        .rst(rst),
+        .we(ex_mem_current.MemWrite),
+        .addr(ex_mem_current.alu_result),
+        .wdata(ex_mem_current.rs2_data),
+        .rdata(mem_read_data)
+    );
 
     always_comb begin
         mem_wb_next = '{default:'0};
@@ -188,7 +200,7 @@ module riscv_pipeline_top #(
         if (ex_mem_current.valid) begin
             mem_wb_next.RegWrite = ex_mem_current.RegWrite;
             mem_wb_next.MemToReg = ex_mem_current.MemToReg;
-            mem_wb_next.read_data = mem_read_data;    
+            mem_wb_next.read_data = ex_mem_current.MemRead ? mem_read_data : 'x;    
             mem_wb_next.alu_result = ex_mem_current.alu_result; 
             mem_wb_next.rd_addr = ex_mem_current.rd_addr;
         end
