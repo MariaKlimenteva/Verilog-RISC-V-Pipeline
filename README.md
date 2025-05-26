@@ -1,23 +1,30 @@
 # Verilog-RISC-V-Pipeline
 
-3. hazards forwarding
-4. branches, jal/jalr, load/store - datamemory?
-
-
-## First stage of development
+## Simple instructions
 Addi and add work (I and R - type instructions) (addi_program.hex)
 
 ### How to run:
 ```
-./run_verilator.sh
+./run_verilator.sh addi
 ```
 It uses NOPs to avoid conflicts because I don't have hazard unit yet.
 
-## Second stage: DMem module
-uses for instructions that work with memory - load & store
+## RAW conflicts for simple instructions (addi, add, sub, etc.)
+hazard unit simple logic: forwarding
 
-## Third stage: hazard unit
-1. Data hazards : forwarding
-2. Control hazards : branches, jumps
+## DMem module
+Uses for instructions that work with memory - load & store
 
-Check slli, sll etc (shamt ?) (alu)
+## Conflicts with lw, sw
+Stall + bubble
+
+## Jump and branches development
+Branch module to calculate when branch should be taken
+
+## Control conflicts with BEQ
+Stall + bubble
+
+### How to run all tests
+```
+./run_verilator.sh
+```

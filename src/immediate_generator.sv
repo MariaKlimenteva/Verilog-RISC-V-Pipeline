@@ -5,41 +5,28 @@ module immediate_generator #() (
     output reg [XLEN-1:0] immediate
 );
     always @(*) begin
-        // for R-type or unknown instructions)
-        immediate = {XLEN{1'b0}}; // Default to 0
-
+        immediate = {XLEN{1'b0}}; 
         case (instr[6:0]) 
             `OPCODE_LOAD, `OPCODE_IMM, `OPCODE_JALR: begin // I-type immediate
-                // Immediate: instr[31:20]
-                // Sign extend from bit 11 (instr[31])
                 immediate = {{(XLEN-12){instr[31]}}, instr[31:20]};
             end
 
             `OPCODE_STORE: begin // S-type immediate
-                // Immediate: {instr[31:25], instr[11:7]}
-                // Sign extend from bit 11 (instr[31])
                 immediate = {{(XLEN-12){instr[31]}}, instr[31:25], instr[11:7]};
             end
 
             `OPCODE_BRANCH: begin // B-type immediate
-                // Immediate: {instr[31], instr[7], instr[30:25], instr[11:8], 1'b0} (13 bits total)
-                // Sign extend from bit 12 (instr[31])
                 immediate = {{(XLEN-13){instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
             end
 
             `OPCODE_LUI, `OPCODE_AUIPC: begin // U-type immediate
-                // Immediate: {instr[31:12], 12'b0}
-                // No sign extension needed in the traditional sense; forms upper 20 bits
                 immediate = {instr[31:12], 12'b0};
             end
 
             `OPCODE_JAL: begin // J-type immediate
-                // Immediate: {instr[31], instr[19:12], instr[20], instr[30:21], 1'b0} (21 bits total)
-                // Sign extend from bit 20 (instr[31])
                 immediate = {{(XLEN-21){instr[31]}}, instr[31], instr[19:12], instr[20], instr[30:21], 1'b0};
             end
             default: immediate = {XLEN{1'b0}};
         endcase
     end
-
 endmodule

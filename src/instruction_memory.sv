@@ -3,8 +3,7 @@
 
 module instruction_memory #(
     parameter int ADDR_WIDTH = XLEN,
-    parameter int MEM_DEPTH  = 1024,
-    parameter string INIT_FILE  = ""
+    parameter int MEM_DEPTH  = 1024
   ) (
     input logic [ADDR_WIDTH-1:0] addr,
     output logic [XLEN-1:0] instr
@@ -13,13 +12,6 @@ module instruction_memory #(
   localparam int INDEX_WIDTH = $clog2(MEM_DEPTH);
 
   logic [XLEN-1:0] mem [0:MEM_DEPTH-1];
-
-  initial begin
-    if (INIT_FILE != "") begin
-      $display("IMEM: Initializing from %s", INIT_FILE);
-      $readmemh(INIT_FILE, mem);
-    end
-  end
 
   logic [INDEX_WIDTH-1:0] word_index;
   generate

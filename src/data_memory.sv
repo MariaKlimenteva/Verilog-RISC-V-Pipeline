@@ -4,8 +4,7 @@
 module data_memory #(
     parameter DATA_WIDTH = XLEN,
     parameter ADDR_WIDTH = XLEN,
-    parameter MEM_DEPTH  = 1024,
-    parameter string INIT_FILE = ""
+    parameter MEM_DEPTH  = 1024
 )(
     input logic clk,
     input logic rst,
@@ -20,12 +19,8 @@ module data_memory #(
     assign rdata = mem[addr[ADDR_WIDTH-1:2]];
 
     initial begin
-        if (INIT_FILE != "") begin
-            $readmemh(INIT_FILE, mem);
-        end else begin
-            foreach(mem[i]) begin
-                mem[i] = '0;
-            end
+        foreach(mem[i]) begin
+            mem[i] = '0;
         end
     end
 

@@ -2,7 +2,6 @@
 
 module riscv_pipeline_top #(
     parameter MEM_DEPTH    = 1024,
-    parameter DMEM_INIT_FILE = "", 
     parameter RESET_VECTOR = 32'h00000000
 ) (
     input logic clk,
@@ -78,17 +77,12 @@ module riscv_pipeline_top #(
     logic [1:0] forward_src2_alu;
 
     hazard_unit hu (
-        .id_ex_rs1_addr(id_ex_current.rs1_addr),
-        .id_ex_rs2_addr(id_ex_current.rs2_addr),
-        .ex_rd_addr(id_ex_current.rd_addr),
-        .id_rs1_addr(if_id_current.instruction[19:15]),
-        .id_rs2_addr(if_id_current.instruction[24:20]),
-        .ex_mem_rd_addr(ex_mem_current.rd_addr),      
-        .ex_mem_regwrite(ex_mem_current.control.RegWrite),     
-        .mem_wb_rd_addr(mem_wb_current.rd_addr),     
-        .mem_wb_regwrite(mem_wb_current.control.RegWrite), 
-        .mem_read(id_ex_current.control.MemRead),   
+        .ex_data(id_ex_current),  
+        .decode_data(if_id_current), 
         .PCSrcE(branch_taken && id_ex_current.control.Branch),
+        .mem_data(ex_mem_current),
+        .wb_data(mem_wb_current),
+
         .forward_a(forward_src1_alu),
         .forward_b(forward_src2_alu),
         .stallD(stallD),
