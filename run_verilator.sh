@@ -2,7 +2,7 @@
 
 TEST_NAME=$1
 
-ALL_TESTS=("addi" "forwarding" "lw_sw" "stall_bubble_lw")
+ALL_TESTS=("addi" "forwarding" "lw_sw" "stall_bubble_lw" "branch_jump")
 
 if [ -z "$1" ]; then
   echo "Run all tests..."

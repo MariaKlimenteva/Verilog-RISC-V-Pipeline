@@ -6,6 +6,8 @@ module pc_logic #(
     input logic rst,
     input logic [XLEN-1:0] branch_target_in,
     input logic take_branch,
+    input logic jump,
+    input logic branch,
     input logic stallF,
 
     output logic [XLEN-1:0] pc_out,
@@ -15,7 +17,13 @@ module pc_logic #(
   logic [XLEN-1:0] current_pc;
   logic [XLEN-1:0] next_pc;
 
-  assign next_pc = (take_branch) ? branch_target_in : (current_pc + 4);
+  always_comb begin : select_next_pc
+    if (jump || branch && take_branch) begin
+      next_pc = branch_target_in;
+    end else begin
+      next_pc = current_pc + 4;
+    end
+  end
 
   always_ff @( posedge clk or posedge rst ) begin
     if (rst) begin

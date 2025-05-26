@@ -63,7 +63,15 @@ module control_unit #() (
 
             `OPCODE_BRANCH: begin // B-type: BEQ/BNE/BLT/BGE/BLTU/BGEU
                 control_out_s.Branch = 1'b1; 
-                control_out_s.ALUOp = `ALU_OP_SUB;
+                case (funct3)
+                    3'b000: control_out_s.BranchType = 3'b000; // BEQ
+                    3'b001: control_out_s.BranchType = 3'b001; // BNE
+                    3'b100: control_out_s.BranchType = 3'b100; // BLT
+                    3'b101: control_out_s.BranchType = 3'b101; // BGE
+                    3'b110: control_out_s.BranchType = 3'b110; // BLTU
+                    3'b111: control_out_s.BranchType = 3'b111; // BGEU
+                    default: control_out_s.BranchType = 3'b000;
+                endcase
             end
 
             `OPCODE_LUI: begin // U-type: LUI
@@ -85,9 +93,8 @@ module control_unit #() (
 
             `OPCODE_JALR: begin // I-type: JALR
                 control_out_s.RegWrite = 1'b1;
-                control_out_s.ALUSrc = 1'b1;
-                control_out_s.ALUOp = `ALU_OP_ADD;
                 control_out_s.Jump = 1'b1; 
+                control_out_s.Jalr = 1'b1;
             end
 
             default: begin

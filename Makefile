@@ -27,3 +27,7 @@ lw_sw:
 stall_bubble_lw:
 		verilator  $(VERILATOR_FLAGS)  --exe $(TB_DIR)/stall_bubble_lw_tb.cpp $(SRC_DIR)/riscv_pipeline_top.sv
 		make -C $(OBJ_DIR_BASE) -f Vriscv_pipeline_top.mk
+
+branch_jump:
+		verilator  $(VERILATOR_FLAGS)  --exe $(TB_DIR)/branch_jump_tb.cpp $(SRC_DIR)/riscv_pipeline_top.sv
+		make -C $(OBJ_DIR_BASE) -f Vriscv_pipeline_top.mk
