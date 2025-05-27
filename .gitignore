@@ -4,3 +4,4 @@
 *.vvp
 output/
 obj_dir/
+build/
