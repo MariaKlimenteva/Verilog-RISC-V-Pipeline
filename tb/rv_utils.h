@@ -57,6 +57,30 @@ inline void check_registers(Vriscv_pipeline_top* top, const std::vector<RegCheck
     }
 }
 
+inline void check_memory(Vriscv_pipeline_top* top, uint32_t base_reg_num, int32_t offset, uint32_t expected_value, const std::string& mem_name = "")
+{
+    uint32_t base_addr = top->riscv_pipeline_top__DOT__reg_file__DOT__registers[base_reg_num];
+
+    uint32_t addr = base_addr + offset;
+    // auto memory_base = top->riscv_pipeline_top__DOT__data_mem__DOT__mem[0];
+    uint8_t byte_value = static_cast<uint8_t>((top->riscv_pipeline_top__DOT__data_mem__DOT__mem[0]+addr) & (uint8_t)0xFF); 
+
+    // uint8_t byte_value = *(memory_base + addr);
+
+    if (byte_value != expected_value) {
+        std::cout << COLOR_RED << "[FAIL] "
+                  << "Memory at " << base_addr << " + " << offset
+                  << ": expected " << static_cast<int>(expected_value)
+                  << ", got " << static_cast<int>(byte_value)
+                  << COLOR_RESET << std::endl;
+    } else {
+        std::cout << COLOR_GREEN << "[PASS] "
+                  << "Memory at " << base_addr << " + " << offset
+                  << ": value " << static_cast<int>(byte_value)
+                  << COLOR_RESET << std::endl;
+    }
+}
+
 inline void load_hex_dynamic(Vriscv_pipeline_top* top, const std::string& filename) {
     std::ifstream file(filename);
     std::string line;

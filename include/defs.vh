@@ -7,6 +7,20 @@ parameter XLEN = 32;
 parameter ALU_OP_WIDTH = 4;
 parameter logic [XLEN-1:0] NOP_INSTRUCTION = 32'h00000013;
 
+typedef enum logic [2:0] {
+    LB,     // 3'b000 - load byte (sign-extended)
+    LH,     // 3'b001 - load halfword (sign-extended)
+    LW,     // 3'b010 - load word
+    LBU,    // 3'b100 - load byte unsigned
+    LHU     // 3'b101 - load halfword unsigned
+} load_type_t;
+
+typedef enum logic [2:0] {
+    SB, 
+    SH, 
+    SW
+} store_type_t;
+
 typedef struct packed {
     logic [ALU_OP_WIDTH-1:0] ALUOp;
     logic ALUSrc;
@@ -19,6 +33,8 @@ typedef struct packed {
     logic Jalr;
     logic [2:0] BranchType;
     logic [31:0] return_code_j;
+    load_type_t LoadType;
+    store_type_t StoreType;
 } control_signals;
 
 typedef struct packed {

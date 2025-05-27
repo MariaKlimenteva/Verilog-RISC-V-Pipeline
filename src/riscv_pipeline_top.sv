@@ -100,8 +100,8 @@ module riscv_pipeline_top #(
 
     control_unit #() ctrl_unit (
         .opcode(if_id_current.instruction[6:0]),
-        .funct3(if_id_current.instruction[14:12]),
-        .funct7(if_id_current.instruction[31:25]),
+        .func3(if_id_current.instruction[14:12]),
+        .func7(if_id_current.instruction[31:25]),
         .control_out_s(cu_control)
     );
 
@@ -197,8 +197,9 @@ module riscv_pipeline_top #(
     end
 
     logic [XLEN-1:0] mem_read_data;
+    logic [3:0] byte_enable;
 
-    data_memory #(
+    /* public */ data_memory #(
         .ADDR_WIDTH(XLEN),
         .DATA_WIDTH(XLEN),
         .MEM_DEPTH(MEM_DEPTH)
@@ -209,18 +210,52 @@ module riscv_pipeline_top #(
         .valid(ex_mem_current.valid),
         .addr(ex_mem_current.alu_result),
         .wdata(ex_mem_current.rs2_data),
+        .byte_enable(byte_enable),
         .rdata(mem_read_data)
     );
 
     always_comb begin
-        mem_wb_next = '{default:'0};
-        mem_wb_next.valid = ex_mem_current.valid;
+        mem_wb_next = '{
+            valid:      ex_mem_current.valid,
+            control:    ex_mem_current.control,
+            alu_result: ex_mem_current.alu_result,
+            rd_addr:    ex_mem_current.rd_addr,
+            default:    '0
+        };
+        
+        if (ex_mem_current.valid && ex_mem_current.control.MemRead) begin
+            case (ex_mem_current.control.LoadType)
+                LB: 
+                    mem_wb_next.read_data = {{24{mem_read_data[7]}}, mem_read_data[7:0]};
+                LBU: 
+                    mem_wb_next.read_data = {24'b0, mem_read_data[7:0]};
+                LH: 
+                    mem_wb_next.read_data = {{16{mem_read_data[15]}}, mem_read_data[15:0]};
+                LHU: 
+                    mem_wb_next.read_data = {16'b0, mem_read_data[15:0]};
+                default: // LW 
+                    mem_wb_next.read_data = mem_read_data;
+            endcase
+        end
+    end
 
-        if (ex_mem_current.valid) begin
-            mem_wb_next.control = ex_mem_current.control;
-            mem_wb_next.read_data = ex_mem_current.control.MemRead ? mem_read_data : 'x;    
-            mem_wb_next.alu_result = ex_mem_current.alu_result; 
-            mem_wb_next.rd_addr = ex_mem_current.rd_addr;
+    always_comb begin
+        byte_enable = 4'b0000;
+        if (ex_mem_current.control.MemWrite) begin
+            case (ex_mem_current.control.StoreType)
+                SB: begin
+                    case (ex_mem_current.alu_result[1:0])
+                        2'b00: byte_enable = 4'b0001;
+                        2'b01: byte_enable = 4'b0010;
+                        2'b10: byte_enable = 4'b0100;
+                        2'b11: byte_enable = 4'b1000;
+                    endcase
+                end
+                SH: 
+                    byte_enable = (ex_mem_current.alu_result[1]) ? 4'b1100 : 4'b0011;
+                default: // SW
+                    byte_enable = 4'b1111;
+            endcase
         end
     end
 
